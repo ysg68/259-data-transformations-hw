@@ -83,6 +83,11 @@ ds_sum <- ds %>% summarize(earliest = min(year),
                            avg_release = floor(mean(year)))
 ds_sum
 
+#Mcomment: Looks good, since you dealt with the NAs you don't need it, but the key include na.rm = T in the summarize functions
+ds_sum <- ds %>% summarize(min_yr = min(year, na.rm = T),
+                 max_yr = max(year, na.rm = T),
+                 mean_yr = mean(year, na.rm = T))
+
 ### Question 7 ----------
 
 # Use filter to find out the artists/song titles for the earliest, most 
@@ -92,6 +97,12 @@ ds_sum
 #ANSWER
 
 ds %>% filter(year %in% ds_sum) %>% arrange(year) %>% select(song, artist, year)
+
+#Mcomment: Looks good - the key uses OR commands but this is the more efficient way
+
+ds %>% filter(year == round(ds_sum$min_yr) | 
+                year == round(ds_sum$mean_yr) | 
+                year == round(ds_sum$max_yr) ) %>% arrange(year)
 
 
 ### Question 8 ---------- 
@@ -105,6 +116,9 @@ ds %>% filter(year %in% ds_sum) %>% arrange(year) %>% select(song, artist, year)
 #ANSWER
 
 ds <- ds %>% mutate(year = ifelse(year < 1900, year + 100, year))
+
+#Mcomment: See an alternative ifelse below
+ds  <- ds %>% mutate(year = ifelse(song == "Brass in Pocket", 1979, year)
 
 ds <- ds %>% mutate(decade = floor(year / 10) * 10)
 
@@ -128,7 +142,11 @@ ds %>% filter(year %in% ds_sum_correct) %>% arrange(year) %>% select(song, artis
 
 ds %>% group_by(decade) %>% summarize(avg_rank = floor(mean(rank)), num_song = n())
 
-
+#Mcomment: Again you already dealt with the NAs, but if you hadn't you could do the below
+ds %>% filter(!is.na(decade)) %>% 
+  group_by(decade) %>% 
+  summarize(mean_rank = mean(rank), n_songs = n())
+                     
 ### Question 10 --------
 
 # Look up the dplyr "count" function
@@ -139,4 +157,6 @@ ds %>% group_by(decade) %>% summarize(avg_rank = floor(mean(rank)), num_song = n
 # ANSWER
 
 ds %>% group_by(decade) %>% count() %>% ungroup() %>% slice_max(order_by = n, n = 1)
-  
+                     
+#Mcomment: Count allows you to group without the groupby function, see below 
+ds %>% count(decade) %>% slice_max(n)
